@@ -105,7 +105,7 @@ def query_rag(query, store_name):
     
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-flash", # Updated to stable model name if needed, or keep preview
+            model="gemini-2.0-flash-exp", # Updated to experimental model which is available
             contents=query,
             config=types.GenerateContentConfig(
                 tools=[
