@@ -80,7 +80,7 @@ def enrich_query_with_context(query, geo_map):
         cluster = context_entry.get('cluster', 'Unknown Cluster')
         
         enrichment = (
-            f"\\n\\nIMPORTANT CONTEXT: The user is asking about '{found_location}'. "
+            f"\n\nIMPORTANT CONTEXT: The user is asking about '{found_location}'. "
             f"This location is in '{cluster}' Cluster, within '{hb}'. "
             f"You MUST prioritize Guidelines, Pathways, and Documents specific to '{hb}' "
             f"or All Wales guidelines. Do not use guidelines from other Health Boards unless explicitly relevant."
@@ -129,14 +129,14 @@ def print_response(response):
     if not response:
         return
 
-    print("\\n--- Response ---\\n")
+    print("\n--- Response ---\n")
     print(response.text)
     
     # Show citations if available
     if response.candidates and hasattr(response.candidates[0], 'grounding_metadata'):
         gm = response.candidates[0].grounding_metadata
         if gm and hasattr(gm, 'grounding_chunks') and gm.grounding_chunks:
-            print("\\n--- Sources ---")
+            print("\n--- Sources ---")
             for chunk in gm.grounding_chunks:
                 if hasattr(chunk, 'retrieved_context'):
                     ctx = chunk.retrieved_context
@@ -144,7 +144,7 @@ def print_response(response):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python rag_chat.py \\"Your question here\\"")
+        print('Usage: python rag_chat.py "Your question here"')
         return
 
     query = sys.argv[1]
