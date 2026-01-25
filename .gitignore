@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Streamlit
+.streamlit/
+
+# Large data/temp files
+OW members area scrape/
+*.csv
+*.json
+!geographic_context.json
+!geographic_context_part_*.json
+!scraper_config.json
+# backend/rag_config.txt (Now included)
+
+# OS
+.DS_Store
+Thumbs.db
