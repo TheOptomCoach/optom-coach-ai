@@ -144,6 +144,21 @@ st.markdown("""
     .citation-link:hover {
         text-decoration: underline;
     }
+
+    /* Pulsing Text Animation */
+    @keyframes pulse {
+        0% { opacity: 0.3; color: #94a3b8; }
+        50% { opacity: 1; color: #1d1d1f; }
+        100% { opacity: 0.3; color: #94a3b8; }
+    }
+    
+    .pulsing-text {
+        font-family: 'Merriweather', serif !important;
+        font-style: italic;
+        font-size: 0.95rem;
+        margin-top: 10px;
+        animation: pulse 1.5s infinite ease-in-out;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -158,7 +173,7 @@ if "messages" not in st.session_state:
 # Display chat messages
 for message in st.session_state.messages:
     role = message["role"]
-    avatar = "🧑‍⚕️" if role == "user" else "🤖"
+    avatar = "👤" if role == "user" else "⌘"
     with st.chat_message(role, avatar=avatar):
         st.markdown(message["content"])
         if "citations" in message and message["citations"]:
@@ -173,35 +188,25 @@ for message in st.session_state.messages:
 if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical protocols..."):
     # Add user message to chat
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="🧑‍⚕️"):
+    with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
 
     # Generate response
-    with st.chat_message("assistant", avatar="🤖"):
-        # NEW: Transparent Logic Container
-        with st.status("Thinking...", expanded=True) as status:
-            store_name = load_store_name()
-            if not store_name:
-                st.error("RAG Store not found.")
-                st.stop()
+    with st.chat_message("assistant", avatar="⌘"):
+        # Custom "Thinking" Placeholder
+        placeholder = st.empty()
+        placeholder.markdown('<div class="pulsing-text">Thinking...</div>', unsafe_allow_html=True)
             
-            # Simulate Context Logic
-            status.write("📍 Detecting location context...")
-            
-            # Infer context for UI effect
-            if any(x in prompt.lower() for x in ['cardiff', 'swansea', 'powys', 'newport', 'cwm taf']):
-                 status.write("🗺️ Localizing to specific Health Board guidelines...")
-            else:
-                 status.write("🔎 Checking All-Wales WGOS protocols...")
-                 
-            status.write("📚 Searching Knowledge Base (Annexes, Pathways)...")
-            
-            response = query_rag(prompt, store_name)
-            
-            if response:
-                status.update(label="Complete", state="complete", expanded=False)
-            else:
-                 status.update(label="Search Failed", state="error")
+        store_name = load_store_name()
+        if not store_name:
+            st.error("RAG Store not found.")
+            st.stop()
+        
+        # Backend RAG call (hidden)
+        response = query_rag(prompt, store_name)
+        
+        # Remove "Thinking..." once done
+        placeholder.empty()
         
         # Display response OUTSIDE the status dropdown
         if response and response.text:
