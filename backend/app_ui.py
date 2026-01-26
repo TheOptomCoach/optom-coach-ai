@@ -163,7 +163,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Minimal Header
-st.title("Optom Coach AI")
+st.title("OptometryWales.AI")
 st.markdown('<p class="subtitle">Your intelligent clinical assistant for Wales.</p>', unsafe_allow_html=True)
 
 # Initialize chat history
@@ -173,7 +173,7 @@ if "messages" not in st.session_state:
 # Display chat messages
 for message in st.session_state.messages:
     role = message["role"]
-    avatar = "👤" if role == "user" else "⌘"
+    avatar = "🧑" if role == "user" else "🤖"
     with st.chat_message(role, avatar=avatar):
         st.markdown(message["content"])
         if "citations" in message and message["citations"]:
@@ -188,11 +188,11 @@ for message in st.session_state.messages:
 if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical protocols..."):
     # Add user message to chat
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="👤"):
+    with st.chat_message("user", avatar="🧑"):
         st.markdown(prompt)
 
     # Generate response
-    with st.chat_message("assistant", avatar="⌘"):
+    with st.chat_message("assistant", avatar="🤖"):
         # Custom "Thinking" Placeholder
         placeholder = st.empty()
         placeholder.markdown('<div class="pulsing-text">Thinking...</div>', unsafe_allow_html=True)

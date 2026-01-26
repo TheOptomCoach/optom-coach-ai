@@ -85,14 +85,9 @@ def enrich_query_with_context(query, geo_map):
         cluster = context_entry.get('cluster', 'Unknown Cluster')
         
         enrichment = (
-            f"\n\nIMPORTANT CONTEXT: The user is asking about '{found_location}'. "
-            f"This location is in '{cluster}' Cluster, within '{hb}'. "
-            f"You MUST prioritize Guidelines, Pathways, and Documents specific to '{hb}' "
-            f"or All Wales guidelines.\n"
-            f"  - For definitions/abbreviations, ALWAYS CONSULT 'College - Annex 2 - Abbreviations.md'.\n"
-            f"  - For urgency/triage/referral speeds, ALWAYS CONSULT 'College - Annex 4 - Urgency.md'.\n"
-            f"  - For equipment lists, refer to 'College - Annex 1 - Equipment.md'.\n"
-            f"Do not guess abbreviations. Use the official College guidance."
+            f" [CONTEXT: Location='{found_location}' ({hb}). "
+            f"Use '{hb}' or 'All Wales' rules. "
+            f"Check 'College - Annex 2' (Abbrevs) & 'Annex 4' (Urgency).]"
         )
         print(f"  [Context Detected] Location: {found_location} -> {hb}")
         return query + enrichment
