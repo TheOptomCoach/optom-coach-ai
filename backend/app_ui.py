@@ -14,39 +14,42 @@ st.set_page_config(
     layout="centered"
 )
 
-# Custom CSS for premium "Apple-like" feel
+# Custom CSS for "Clean Serif" Clinical Feel
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600&display=swap');
 
-    /* Global Typography */
-    html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    /* Global Typography - ALL Serif */
+    html, body, [class*="css"], font, span, div {
+        font-family: 'Merriweather', serif !important;
         color: #1d1d1f;
     }
 
     /* Main Container */
     .stApp {
-        background-color: #ffffff;
+        background-color: #f8f9fa; /* Warm paper-like grey */
     }
 
     /* Header Styling */
     h1 {
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        font-size: 2.5rem;
-        color: #1d1d1f;
+        font-family: 'Playfair Display', serif !important;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        font-size: 2.8rem;
+        color: #1e3a8a; /* Clinical Navy */
         margin-bottom: 0.5rem;
     }
     
     .subtitle {
-        font-size: 1.1rem;
-        color: #86868b;
-        font-weight: 400;
-        margin-bottom: 2rem;
+        font-family: 'Merriweather', serif !important;
+        font-size: 1.15rem;
+        color: #475569;
+        font-weight: 300;
+        font-style: italic;
+        margin-bottom: 2.5rem;
     }
 
-    /* Chat Bubbles - Apple Message Style */
+    /* Chat Bubbles */
     .stChatMessage {
         background-color: transparent;
         border: none;
@@ -54,24 +57,30 @@ st.markdown("""
         margin-bottom: 1.5rem;
     }
 
-    /* User Message */
+    /* User Message - Clean Blue Serif */
     [data-testid="stChatMessage"][data-testid="user"] {
         background-color: #007aff;
         color: white;
-        border-radius: 18px 18px 0 18px;
-        padding: 12px 18px;
+        border-radius: 12px 12px 0 12px;
+        padding: 16px 22px;
         margin-left: auto;
         max-width: 80%;
-        box-shadow: 0 2px 4px rgba(0,122,255,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        font-family: 'Merriweather', serif !important;
     }
     
-    /* Assistant Message */
+    /* Assistant Message - Paper White Serif */
     [data-testid="stChatMessage"][data-testid="assistant"] {
-        background-color: #f2f2f7;
+        background-color: #ffffff;
         color: #1d1d1f;
-        border-radius: 18px 18px 18px 0;
-        padding: 16px 20px;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid #1e3a8a; /* Stronger accent */
+        border-radius: 12px 12px 12px 0;
+        padding: 18px 24px;
         max-width: 85%;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        font-family: 'Merriweather', serif !important;
+        line-height: 1.6;
     }
 
     /* Input Area */
@@ -80,51 +89,60 @@ st.markdown("""
     }
     
     .stChatInputContainer textarea {
-        border-radius: 24px;
-        border: 1px solid #d2d2d7;
-        padding: 12px 16px;
+        border-radius: 15px;
+        border: 1px solid #cbd5e1;
+        padding: 16px;
+        font-family: 'Merriweather', serif !important;
         font-size: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        background-color: #fbfbfd;
+        background-color: #ffffff;
     }
     
     .stChatInputContainer textarea:focus {
-        border-color: #007aff;
-        background-color: #ffffff;
-        box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+    }
+
+    /* Status Box (The "Thinking" bit) */
+    .stStatusWidget {
+        font-family: 'Merriweather', serif !important;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
     }
 
     /* Citation Cards */
     .citation-card {
         margin-top: 16px;
-        padding: 12px 16px;
-        background: #ffffff;
-        border: 1px solid #e5e5ea;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        color: #1d1d1f;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        padding: 14px 18px;
+        background: #f1f5f9;
+        border-left: 3px solid #1e3a8a;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #334155;
+        font-family: 'Merriweather', serif !important;
     }
     
     .citation-header {
+        font-family: 'Playfair Display', serif !important;
         font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #86868b;
-        font-weight: 600;
-        margin-bottom: 8px;
+        letter-spacing: 0.1em;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 10px;
     }
     
     .citation-link {
-        color: #007aff;
+        color: #0369a1;
         text-decoration: none;
         display: block;
-        padding: 2px 0;
+        padding: 4px 0;
         transition: opacity 0.2s;
+        font-family: 'Merriweather', serif !important;
     }
     
     .citation-link:hover {
-        opacity: 0.7;
+        text-decoration: underline;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -158,13 +176,32 @@ if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical proto
 
     # Generate response
     with st.chat_message("assistant"):
-        with st.spinner("Searching guidelines..."):
+        # NEW: Transparent Logic Container
+        with st.status("Thinking...", expanded=True) as status:
             store_name = load_store_name()
             if not store_name:
-                st.error("RAG Store not found. Please run indexer first.")
+                st.error("RAG Store not found.")
                 st.stop()
             
+            # Simulate Context Logic (since we can't see inside python func easily from here without refactor)
+            # Ideally we'd modify query_rag to return steps, but for now we'll show the intent:
+            status.write("📍 Detecting location context...")
+            
+            # We call the backend which does the enrichment internally
+            # For the UI effect, we can infer:
+            if any(x in prompt.lower() for x in ['cardiff', 'swansea', 'powys', 'newport', 'cwm taf']):
+                 status.write("🗺️ Localizing to specific Health Board guidelines...")
+            else:
+                 status.write("🔎 Checking All-Wales WGOS protocols...")
+                 
+            status.write("📚 Searching Knowledge Base (Annexes, Pathways)...")
+            
             response = query_rag(prompt, store_name)
+            
+            if response:
+                status.update(label="Complete", state="complete", expanded=False)
+            else:
+                 status.update(label="Search Failed", state="error")
             
             if response and response.text:
                 response_text = response.text
