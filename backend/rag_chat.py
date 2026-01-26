@@ -115,6 +115,7 @@ def query_rag(query, store_name):
             model="gemini-2.5-pro", # Reverted to pro model per user request
             contents=query,
             config=types.GenerateContentConfig(
+                system_instruction="You are a helpful assistant for Optometrists in Wales. You MUST answers questions based ONLY on the provided context. The context is strictly specific to WALES. Do NOT provide information about England, Scotland, or Ireland. If the user asks about a location not in Wales, politely clarify that you only cover Wales. If the answer is not in the context, say so.",
                 tools=[
                     types.Tool(
                         file_search=types.FileSearch(
