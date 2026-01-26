@@ -1,6 +1,7 @@
 import os
 import time
 import glob
+import concurrent.futures
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -22,6 +23,32 @@ def create_file_search_store():
     print(f"Store created: {file_search_store.name}")
     return file_search_store
 
+def upload_single_file(file_path, store_name):
+    display_name = os.path.basename(file_path)
+    print(f"Starting upload: {display_name}")
+    
+    try:
+        # Upload and import directly to the store
+        operation = client.file_search_stores.upload_to_file_search_store(
+            file=file_path,
+            file_search_store_name=store_name,
+            config={
+                'display_name': display_name
+            }
+        )
+        
+        # Wait for the operation to complete (blocks only this thread)
+        while not operation.done:
+            time.sleep(1)
+            operation = client.operations.get(operation)
+        
+        print(f"✅ Successfully uploaded: {display_name}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Failed to upload {display_name}: {e}")
+        return False
+
 def upload_files(store_name, files_dir):
     print(f"Scanning for files in {files_dir}...")
     # Get all files recursively
@@ -36,36 +63,26 @@ def upload_files(store_name, files_dir):
             ext = os.path.splitext(file)[1].lower()
             if ext not in ['.md', '.pdf', '.docx', '.txt']:
                 continue
+            
+            if file == 'core-hours.md':
+                print(f"Skipping {file} due to known issues.")
+                continue
 
             file_path = os.path.join(root, file)
             files_to_upload.append(file_path)
 
     print(f"Found {len(files_to_upload)} files.")
+    print("Starting parallel upload with 10 workers...")
     
-    for file_path in files_to_upload:
-        display_name = os.path.basename(file_path)
-        print(f"Uploading {display_name}...")
+    # Use ThreadPoolExecutor for parallel uploads
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        # Submit all tasks
+        futures = [executor.submit(upload_single_file, fp, store_name) for fp in files_to_upload]
         
-        try:
-            # Upload and import directly to the store
-            # Note: The Python SDK example uses upload_to_file_search_store which combines upload + import
-            operation = client.file_search_stores.upload_to_file_search_store(
-                file=file_path,
-                file_search_store_name=store_name,
-                config={
-                    'display_name': display_name
-                }
-            )
-            
-            # Wait for the operation to complete
-            while not operation.done:
-                time.sleep(1)
-                operation = client.operations.get(operation)
-            
-            print(f"Successfully uploaded: {display_name}")
-            
-        except Exception as e:
-            print(f"Failed to upload {display_name}: {e}")
+        # Wait for all to complete
+        concurrent.futures.wait(futures)
+        
+    print("All uploads processed.")
 
 def main():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
