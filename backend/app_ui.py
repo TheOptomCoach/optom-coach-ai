@@ -61,13 +61,19 @@ st.markdown("""
     /* User Message - Clean Blue Serif */
     [data-testid="stChatMessage"][data-testid="user"] {
         background-color: #007aff;
-        color: white;
+        color: white !important; /* Force white text */
         border-radius: 12px 12px 0 12px;
         padding: 16px 22px;
         margin-left: auto;
         max-width: 80%;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         font-family: 'Merriweather', serif !important;
+    }
+    
+    [data-testid="stChatMessage"][data-testid="user"] p,
+    [data-testid="stChatMessage"][data-testid="user"] div,
+    [data-testid="stChatMessage"][data-testid="user"] span {
+         color: white !important;
     }
     
     /* Assistant Message - Paper White Serif */
@@ -188,6 +194,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "pending_feedback" not in st.session_state:
     st.session_state.pending_feedback = False
+if "feedback_state" not in st.session_state:
+    st.session_state.feedback_state = None # "positive" or "negative_pending"
 if "last_q_a" not in st.session_state:
     st.session_state.last_q_a = None # Tuple (question, answer)
 
@@ -205,31 +213,57 @@ for message in st.session_state.messages:
                 </div>
             ''', unsafe_allow_html=True)
 
-# Feedback Handling
+# Feedback Handling logic
 if st.session_state.pending_feedback:
-    st.markdown("### 📝 Rate this answer to continue")
-    col1, col2, col3 = st.columns(3)
+    q, a = st.session_state.last_q_a
     
-    with col1:
-        if st.button("👍 Helpful"):
-            q, a = st.session_state.last_q_a
-            log_feedback(q, a, "positive")
-            st.session_state.pending_feedback = False
-            st.rerun()
-            
-    with col2:
-        if st.button("😐 Neutral"):
-            q, a = st.session_state.last_q_a
-            log_feedback(q, a, "neutral")
-            st.session_state.pending_feedback = False
-            st.rerun()
-            
-    with col3:
-        if st.button("👎 Poor/Incorrect"):
-            q, a = st.session_state.last_q_a
-            log_feedback(q, a, "negative")
-            st.session_state.pending_feedback = False
-            st.rerun()
+    # If we haven't clicked a button yet (or reset)
+    if st.session_state.feedback_state is None:
+        st.markdown("### Rate this answer")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("👍"):
+                log_feedback(q, a, "positive")
+                st.session_state.pending_feedback = False
+                st.rerun()
+        with col2:
+            if st.button("👎"):
+                st.session_state.feedback_state = "negative_pending"
+                st.rerun()
+                
+    # If we clicked thumb down, show text area
+    elif st.session_state.feedback_state == "negative_pending":
+        st.warning("We're sorry the answer wasn't helpful.")
+        correction = st.text_area(
+            "What answer/info were you expecting instead? Your feedback will improve the AI for yourself and other optometrists.",
+            key="feedback_text"
+        )
+        
+        if st.button("Submit Feedback"):
+            if correction and len(correction.strip()) > 5:
+                # Log to DB
+                log_feedback(q, a, "negative", expected_answer=correction)
+                
+                # Append to Markdown File for RAG Learning
+                try:
+                    feedback_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'clean_knowledge', 'User Feedback - Corrections.md')
+                    with open(feedback_file, "a", encoding="utf-8") as f:
+                        f.write(f"\\n\\n## Correction [Date: {os.popen('date /t').read().strip()}]\\n")
+                        f.write(f"**Question:** {q}\\n")
+                        f.write(f"**AI Answer:** {a}\\n")
+                        f.write(f"**User Correction:** {correction}\\n")
+                        f.write("---\\n")
+                except Exception as e:
+                    print(f"Error saving to markdown: {e}")
+                    
+                st.success("Thank you! Your feedback has been recorded and will learn from this.")
+                import time
+                time.sleep(1.5)
+                st.session_state.pending_feedback = False
+                st.session_state.feedback_state = None
+                st.rerun()
+            else:
+                st.error("Please provide a bit more detail so we can learn.")
 
 # Input (Disabled if waiting for feedback)
 prompt = st.chat_input("Ask about WGOS, referral pathways, or clinical protocols...", disabled=st.session_state.pending_feedback)
