@@ -109,7 +109,7 @@ def query_rag(query, store_name):
     
     try:
         response = client.models.generate_content(
-            model="gemini-3-flash-preview", # Updated to fast model per user request
+            model="gemini-2.5-pro", # Reverted to pro model per user request
             contents=query,
             config=types.GenerateContentConfig(
                 tools=[
