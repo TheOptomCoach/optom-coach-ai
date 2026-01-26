@@ -14,20 +14,21 @@ def init_db():
             user_question TEXT,
             ai_answer TEXT,
             rating TEXT,
+            expected_answer TEXT,
             model_used TEXT
         )
     ''')
     conn.commit()
     conn.close()
 
-def log_feedback(question, answer, rating, model="gemini-2.5-pro"):
+def log_feedback(question, answer, rating, expected_answer=None, model="gemini-2.5-pro"):
     init_db() # Ensure table exists
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
-        INSERT INTO feedback (timestamp, user_question, ai_answer, rating, model_used)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (datetime.now().isoformat(), question, answer, rating, model))
+        INSERT INTO feedback (timestamp, user_question, ai_answer, rating, expected_answer, model_used)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (datetime.now().isoformat(), question, answer, rating, expected_answer, model))
     conn.commit()
     conn.close()
     print(f"  [Feedback Logged] Rating: {rating}")
