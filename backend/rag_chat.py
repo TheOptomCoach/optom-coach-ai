@@ -13,8 +13,10 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
+from functools import lru_cache
 import json
 
+@lru_cache(maxsize=1)
 def load_store_name():
     config_path = os.path.join(os.path.dirname(__file__), 'rag_config.txt')
     if not os.path.exists(config_path):
@@ -23,6 +25,7 @@ def load_store_name():
     with open(config_path, 'r') as f:
         return f.read().strip()
 
+@lru_cache(maxsize=1)
 def load_geo_context():
     """Load the mapping of Town/Practice -> Cluster -> Health Board from split files"""
     # Go up one level from backend/ to find geographic_context_part_*.json
