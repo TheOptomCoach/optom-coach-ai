@@ -62,6 +62,11 @@ def enrich_query_with_context(query, geo_map):
     """
     query_lower = query.lower()
     
+    # HARDCODED ALIASES (Fix for Cwm Taf -> Cwm Taf Morgannwg)
+    if "cwm taf" in query_lower and "morgannwg" not in query_lower:
+        query_lower += " cwm taf morgannwg university health board"
+        print("  [Alias Applied] 'Cwm Taf' -> 'Cwm Taf Morgannwg'")
+    
     # Simple keyword matching (could be improved with fuzzy matching later)
     # We sort keys by length descending to match "Tenby Surgery" before "Tenby"
     sorted_keys = sorted(geo_map.keys(), key=len, reverse=True)

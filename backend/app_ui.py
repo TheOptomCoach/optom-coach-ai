@@ -157,7 +157,9 @@ if "messages" not in st.session_state:
 
 # Display chat messages
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    role = message["role"]
+    avatar = "🧑‍⚕️" if role == "user" else "🤖"
+    with st.chat_message(role, avatar=avatar):
         st.markdown(message["content"])
         if "citations" in message and message["citations"]:
             st.markdown(f'''
@@ -171,11 +173,11 @@ for message in st.session_state.messages:
 if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical protocols..."):
     # Add user message to chat
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="🧑‍⚕️"):
         st.markdown(prompt)
 
     # Generate response
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🤖"):
         # NEW: Transparent Logic Container
         with st.status("Thinking...", expanded=True) as status:
             store_name = load_store_name()
@@ -183,12 +185,10 @@ if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical proto
                 st.error("RAG Store not found.")
                 st.stop()
             
-            # Simulate Context Logic (since we can't see inside python func easily from here without refactor)
-            # Ideally we'd modify query_rag to return steps, but for now we'll show the intent:
+            # Simulate Context Logic
             status.write("📍 Detecting location context...")
             
-            # We call the backend which does the enrichment internally
-            # For the UI effect, we can infer:
+            # Infer context for UI effect
             if any(x in prompt.lower() for x in ['cardiff', 'swansea', 'powys', 'newport', 'cwm taf']):
                  status.write("🗺️ Localizing to specific Health Board guidelines...")
             else:
@@ -202,37 +202,38 @@ if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical proto
                 status.update(label="Complete", state="complete", expanded=False)
             else:
                  status.update(label="Search Failed", state="error")
+        
+        # Display response OUTSIDE the status dropdown
+        if response and response.text:
+            response_text = response.text
+            citations = ""
             
-            if response and response.text:
-                response_text = response.text
-                citations = ""
-                
-                # Extract citations
-                if response.candidates and hasattr(response.candidates[0], 'grounding_metadata'):
-                    gm = response.candidates[0].grounding_metadata
-                    if gm and hasattr(gm, 'grounding_chunks') and gm.grounding_chunks:
-                        sources = set()
-                        for chunk in gm.grounding_chunks:
-                            if hasattr(chunk, 'retrieved_context'):
-                                ctx = chunk.retrieved_context
-                                title = ctx.title if hasattr(ctx, 'title') else 'Unknown Document'
-                                sources.add(title)
-                        if sources:
-                            citations = "".join([f'<div class="citation-link">{s}</div>' for s in sources])
+            # Extract citations
+            if response.candidates and hasattr(response.candidates[0], 'grounding_metadata'):
+                gm = response.candidates[0].grounding_metadata
+                if gm and hasattr(gm, 'grounding_chunks') and gm.grounding_chunks:
+                    sources = set()
+                    for chunk in gm.grounding_chunks:
+                        if hasattr(chunk, 'retrieved_context'):
+                            ctx = chunk.retrieved_context
+                            title = ctx.title if hasattr(ctx, 'title') else 'Unknown Document'
+                            sources.add(title)
+                    if sources:
+                        citations = "".join([f'<div class="citation-link">{s}</div>' for s in sources])
 
-                st.markdown(response_text)
-                if citations:
-                    st.markdown(f'''
-                        <div class="citation-card">
-                            <div class="citation-header">References</div>
-                            {citations}
-                        </div>
-                    ''', unsafe_allow_html=True)
-                
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": response_text,
-                    "citations": citations
-                })
-            else:
-                st.error("Sorry, I couldn't find an answer to that.")
+            st.markdown(response_text)
+            if citations:
+                st.markdown(f'''
+                    <div class="citation-card">
+                        <div class="citation-header">References</div>
+                        {citations}
+                    </div>
+                ''', unsafe_allow_html=True)
+            
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": response_text,
+                "citations": citations
+            })
+        else:
+            st.error("Sorry, I couldn't find an answer to that.")
