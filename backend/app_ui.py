@@ -5,6 +5,7 @@ import sys
 # Add current directory to path so we can import backend modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from feedback_logger import log_feedback
 from rag_chat import query_rag, load_store_name
 
 # Page Config
@@ -102,6 +103,12 @@ st.markdown("""
         border-color: #1e3a8a;
         box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
     }
+    
+    /* Disabled Input when waiting for feedback */
+    .stChatInputContainer textarea:disabled {
+        background-color: #e2e8f0;
+        cursor: not-allowed;
+    }
 
     /* Status Box (The "Thinking" bit) */
     .stStatusWidget {
@@ -159,6 +166,16 @@ st.markdown("""
         margin-top: 10px;
         animation: pulse 1.5s infinite ease-in-out;
     }
+    
+    /* Feedback Container */
+    .feedback-container {
+        padding: 1rem;
+        background-color: #f1f5f9;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -166,9 +183,13 @@ st.markdown("""
 st.title("OptometryWales.AI")
 st.markdown('<p class="subtitle">Your intelligent clinical assistant for Wales.</p>', unsafe_allow_html=True)
 
-# Initialize chat history
+# Initialize Session State
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "pending_feedback" not in st.session_state:
+    st.session_state.pending_feedback = False
+if "last_q_a" not in st.session_state:
+    st.session_state.last_q_a = None # Tuple (question, answer)
 
 # Display chat messages
 for message in st.session_state.messages:
@@ -184,8 +205,36 @@ for message in st.session_state.messages:
                 </div>
             ''', unsafe_allow_html=True)
 
-# Input
-if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical protocols..."):
+# Feedback Handling
+if st.session_state.pending_feedback:
+    st.markdown("### 📝 Rate this answer to continue")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("👍 Helpful"):
+            q, a = st.session_state.last_q_a
+            log_feedback(q, a, "positive")
+            st.session_state.pending_feedback = False
+            st.rerun()
+            
+    with col2:
+        if st.button("😐 Neutral"):
+            q, a = st.session_state.last_q_a
+            log_feedback(q, a, "neutral")
+            st.session_state.pending_feedback = False
+            st.rerun()
+            
+    with col3:
+        if st.button("👎 Poor/Incorrect"):
+            q, a = st.session_state.last_q_a
+            log_feedback(q, a, "negative")
+            st.session_state.pending_feedback = False
+            st.rerun()
+
+# Input (Disabled if waiting for feedback)
+prompt = st.chat_input("Ask about WGOS, referral pathways, or clinical protocols...", disabled=st.session_state.pending_feedback)
+
+if prompt:
     # Add user message to chat
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="🧑"):
@@ -199,16 +248,16 @@ if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical proto
             
         store_name = load_store_name()
         if not store_name:
-            st.error("RAG Store not found.")
+            st.error("RAG Store not found. Please wait for indexing to complete.")
             st.stop()
         
-        # Backend RAG call (hidden)
+        # Backend RAG call
         response = query_rag(prompt, store_name)
         
         # Remove "Thinking..." once done
         placeholder.empty()
         
-        # Display response OUTSIDE the status dropdown
+        # Display response
         if response and response.text:
             response_text = response.text
             citations = ""
@@ -240,5 +289,11 @@ if prompt := st.chat_input("Ask about WGOS, referral pathways, or clinical proto
                 "content": response_text,
                 "citations": citations
             })
+            
+            # Set Feedback State
+            st.session_state.last_q_a = (prompt, response_text)
+            st.session_state.pending_feedback = True
+            st.rerun() # Rerun to show buttons and disable input
+            
         else:
-            st.error("Sorry, I couldn't find an answer to that.")
+            st.error("Sorry, I couldn't find an answer to that. Please try rephrasing.")
