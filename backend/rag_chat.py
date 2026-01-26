@@ -83,7 +83,11 @@ def enrich_query_with_context(query, geo_map):
             f"\n\nIMPORTANT CONTEXT: The user is asking about '{found_location}'. "
             f"This location is in '{cluster}' Cluster, within '{hb}'. "
             f"You MUST prioritize Guidelines, Pathways, and Documents specific to '{hb}' "
-            f"or All Wales guidelines. Do not use guidelines from other Health Boards unless explicitly relevant."
+            f"or All Wales guidelines.\n"
+            f"  - For definitions/abbreviations, ALWAYS CONSULT 'College - Annex 2 - Abbreviations.md'.\n"
+            f"  - For urgency/triage/referral speeds, ALWAYS CONSULT 'College - Annex 4 - Urgency.md'.\n"
+            f"  - For equipment lists, refer to 'College - Annex 1 - Equipment.md'.\n"
+            f"Do not guess abbreviations. Use the official College guidance."
         )
         print(f"  [Context Detected] Location: {found_location} -> {hb}")
         return query + enrichment
@@ -105,7 +109,7 @@ def query_rag(query, store_name):
     
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-pro", # Updated to user-approved model
+            model="gemini-3-flash-preview", # Updated to fast model per user request
             contents=query,
             config=types.GenerateContentConfig(
                 tools=[
