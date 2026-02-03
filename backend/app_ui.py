@@ -6,7 +6,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from feedback_logger import log_feedback
-from rag_chat import query_rag, load_store_name
+from rag_chat import query_rag, load_store_name, load_source_urls
 
 # Page Config
 st.set_page_config(
@@ -149,13 +149,15 @@ st.markdown("""
         color: #0369a1;
         text-decoration: none;
         display: block;
-        padding: 4px 0;
-        transition: opacity 0.2s;
+        padding: 6px 0;
+        transition: all 0.2s;
         font-family: 'Merriweather', serif !important;
     }
     
     .citation-link:hover {
+        color: #1e3a8a;
         text-decoration: underline;
+        padding-left: 4px;
     }
 
     /* Pulsing Text Animation */
@@ -169,8 +171,10 @@ st.markdown("""
         font-family: 'Merriweather', serif !important;
         font-style: italic;
         font-size: 0.95rem;
-        margin-top: 10px;
-        animation: pulse 1.5s infinite ease-in-out;
+        display: inline-block;
+        vertical-align: top;
+        margin-top: -5px;
+        animation: pulse 2.0s infinite ease-in-out;
     }
     
     /* Feedback Container */
@@ -187,7 +191,7 @@ st.markdown("""
 
 # Minimal Header
 st.title("OptometryWales.AI")
-st.markdown('<p class="subtitle">Your intelligent clinical assistant for Wales.</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">The intelligent R.A.G AI assistant for Welsh optometrists.</p>', unsafe_allow_html=True)
 
 # Initialize Session State
 if "messages" not in st.session_state:
@@ -219,17 +223,19 @@ if st.session_state.pending_feedback:
     
     # If we haven't clicked a button yet (or reset)
     if st.session_state.feedback_state is None:
-        st.markdown("### Rate this answer")
-        col1, col2 = st.columns(2)
+        st.markdown("### Mandatory: Rate Answer To Train AI")
+        col1, col2, col3 = st.columns([1, 1, 8])
         with col1:
-            if st.button("👍"):
+            if st.button("👍", use_container_width=True):
                 log_feedback(q, a, "positive")
                 st.session_state.pending_feedback = False
                 st.rerun()
         with col2:
-            if st.button("👎"):
+            if st.button("👎", use_container_width=True):
                 st.session_state.feedback_state = "negative_pending"
                 st.rerun()
+        with col3:
+            pass  # Empty column for spacing
                 
     # If we clicked thumb down, show text area
     elif st.session_state.feedback_state == "negative_pending":
@@ -300,14 +306,26 @@ if prompt:
             if response.candidates and hasattr(response.candidates[0], 'grounding_metadata'):
                 gm = response.candidates[0].grounding_metadata
                 if gm and hasattr(gm, 'grounding_chunks') and gm.grounding_chunks:
-                    sources = set()
+                    url_map = load_source_urls()  # Load pre-built mapping
+                    sources = {}  # {title: url}
+                    
+                    def normalize_key(filename):
+                        return filename.replace('.md', '').replace('.pdf', '').lower().strip()
+                    
                     for chunk in gm.grounding_chunks:
                         if hasattr(chunk, 'retrieved_context'):
                             ctx = chunk.retrieved_context
                             title = ctx.title if hasattr(ctx, 'title') else 'Unknown Document'
-                            sources.add(title)
+                            # Try exact match first, then normalized
+                            url = url_map.get(title) or url_map.get(normalize_key(title))
+                            sources[title] = url
+                    
                     if sources:
-                        citations = "".join([f'<div class="citation-link">{s}</div>' for s in sources])
+                        citations = "".join([
+                            f'<a href="{url}" target="_blank" class="citation-link">📄 {title}</a>' 
+                            if url else f'<div class="citation-link">📄 {title}</div>'
+                            for title, url in sources.items()
+                        ])
 
             st.markdown(response_text)
             if citations:
